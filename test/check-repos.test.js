@@ -190,7 +190,7 @@ test('checkReposInDirectory finds no repos in empty directory', () => {
   const { getOutput, restore } = captureLog();
   try {
     checkReposInDirectory(tmpDir, false);
-    assert.match(getOutput(), /No git repositories found/);
+    assert.match(getOutput(), /No repositories with uncommitted or unpushed changes found/);
   } finally {
     restore();
     fs.rmSync(tmpDir, { recursive: true });
@@ -204,7 +204,7 @@ test('checkReposInDirectory skips node_modules', () => {
   const { getOutput, restore } = captureLog();
   try {
     checkReposInDirectory(tmpDir, false);
-    assert.match(getOutput(), /No git repositories found/);
+    assert.match(getOutput(), /No repositories with uncommitted or unpushed changes found/);
   } finally {
     restore();
     fs.rmSync(tmpDir, { recursive: true });
@@ -219,7 +219,7 @@ test('checkReposInDirectory finds repo at root and recurses into subdirs', () =>
   try {
     checkReposInDirectory(tmpDir, false);
     assert.match(getOutput(), new RegExp(tmpDir));
-    assert.match(getOutput(), /No git repositories found/);
+    assert.match(getOutput(), /No repositories with uncommitted or unpushed changes found/);
   } finally {
     restore();
     fs.rmSync(tmpDir, { recursive: true });

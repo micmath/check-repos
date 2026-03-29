@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-03-29
+
+### Fixed
+
+- Porcelain filter now extracts filename (everything after the first space) before filtering `.DS_Store`/`.lfs` — previously checked entire `XY PATH` line, causing false positives on paths like `src/my-ds-store-utils.js`
+- Git log commands now use array argv syntax instead of shell string format — fixes incorrect argument splitting where `"%h %s"` was being passed as separate argv elements instead of a single format string
+- `error.stderr` reference removed from `execSync` catch blocks — `execSync` does not expose stderr as a separate property, so the conditional was dead code
+
+### Changed
+
+- `isGitRepo()` now uses a single `statSync` call with try/catch instead of `existsSync` + two `statSync` calls — eliminates a TOCTOU race window
+- `IGNORED` set hoisted from `walk()` to module scope — avoids recreating the Set on every recursive call
+- "No git repositories found" message updated to "No repositories with uncommitted or unpushed changes found" to accurately reflect when repos exist but are clean
+
 ## [1.0.0] - 2026-03-29
 
 ### Added

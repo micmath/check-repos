@@ -12,6 +12,18 @@ const { execSync } = require('node:child_process');
 /** @type {import('child_process').ExecSyncOptions} */
 const EXEC_OPTS = { stdio: ['pipe', 'pipe', 'pipe'] };
 
+const IGNORED = new Set([
+  'node_modules',
+  'dist',
+  'build',
+  '.venv',
+  'venv',
+  '__pycache__',
+  'vendor',
+  '.DS_Store',
+  '.git',
+]);
+
 /**
  * Print usage information to stdout.
  */
@@ -45,15 +57,12 @@ EXAMPLES:
  */
 function isGitRepo(dir) {
   const gitPath = path.join(dir, '.git');
-  if (fs.existsSync(gitPath)) {
-    if (fs.statSync(gitPath).isDirectory()) {
-      return true;
-    }
-    if (fs.statSync(gitPath).isFile()) {
-      return true;
-    }
+  try {
+    const stat = fs.statSync(gitPath);
+    return stat.isDirectory() || stat.isFile();
+  } catch {
+    return false;
   }
-  return false;
 }
 
 /**
@@ -109,22 +118,25 @@ function checkRepo(repoPath, verbose) {
     const uncommitted = statusOutput
       .toString()
       .split('\n')
-      .filter(line => line && !line.trim().includes('.DS_Store'))
-      .filter(line => !line.includes('.lfs'))
+      .filter(line => {
+        if (!line) return false;
+        const filename = line.slice(line.indexOf(' ') + 1);
+        return !filename.includes('.DS_Store') && !filename.includes('.lfs');
+      })
       .join('\n');
 
     let unpushed = '';
     try {
-      unpushed = execSync('git log @{u}..HEAD --pretty=format:"%h %s"', {
-        cwd: repoPath,
-        ...EXEC_OPTS,
-      })
+      unpushed = execSync(
+        ['git', 'log', '@{u}..HEAD', '--pretty=format:%h %s'],
+        { cwd: repoPath, ...EXEC_OPTS },
+      )
         .toString()
         .trim();
     } catch {
       try {
         unpushed = execSync(
-          `git log origin/${branch}..HEAD --pretty=format:"%h %s"`,
+          ['git', 'log', `origin/${branch}..HEAD`, '--pretty=format:%h %s'],
           { cwd: repoPath, ...EXEC_OPTS },
         )
           .toString()
@@ -149,7 +161,11 @@ function checkRepo(repoPath, verbose) {
           console.log('  Uncommitted changes:');
           uncommitted
             .split('\n')
-            .filter(line => line && !line.includes('.DS_Store'))
+            .filter(line => {
+              if (!line) return false;
+              const filename = line.slice(line.indexOf(' ') + 1);
+              return !filename.includes('.DS_Store') && !filename.includes('.lfs');
+            })
             .forEach(line => {
               console.log(`    ${line}`);
             });
@@ -168,9 +184,7 @@ function checkRepo(repoPath, verbose) {
       console.log('');
     }
   } catch (error) {
-    console.error(
-      `Error checking ${repoPath}: ${error.message} ${error.stderr ? `(${error.stderr})` : ''}`,
-    );
+    console.error(`Error checking ${repoPath}: ${error.message}`);
   }
 }
 
@@ -193,23 +207,9 @@ function checkReposInDirectory(dir, verbose) {
     try {
       entries = fs.readdirSync(currentDir);
     } catch (error) {
-      console.error(
-        `Error reading directory ${currentDir}: ${error.message} ${error.stderr ? `(${error.stderr})` : ''}`,
-      );
+      console.error(`Error reading directory ${currentDir}: ${error.message}`);
       return;
     }
-
-    const IGNORED = new Set([
-      'node_modules',
-      'dist',
-      'build',
-      '.venv',
-      'venv',
-      '__pycache__',
-      'vendor',
-      '.DS_Store',
-      '.git',
-    ]);
 
     for (const entry of entries) {
       if (IGNORED.has(entry)) continue;
@@ -240,7 +240,7 @@ function checkReposInDirectory(dir, verbose) {
   walk(dir);
 
   if (!gitFound) {
-    console.log(`No git repositories found in ${dir}`);
+    console.log(`No repositories with uncommitted or unpushed changes found in ${dir}`);
   }
 }
 
