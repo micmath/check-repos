@@ -1,0 +1,26 @@
+{
+  "name": "check-repos",
+  "version": "1.0.0",
+  "description": "A Node.js utility for scanning directories for git repositories with uncommitted or unpushed changes. No external dependencies — uses only Node.js built-ins.",
+  "homepage": "https://github.com/micmath/check-repos#readme",
+  "bugs": {
+    "url": "https://github.com/micmath/check-repos/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/micmath/check-repos.git"
+  },
+  "license": "UNLICENSED",
+  "author": "minimaxM2.7",
+  "type": "commonjs",
+  "main": "src/check-repos.js",
+  "bin": {
+    "check-repos": "src/check-repos.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node --test ./test/check-repos.test.js"
+  }
+}
